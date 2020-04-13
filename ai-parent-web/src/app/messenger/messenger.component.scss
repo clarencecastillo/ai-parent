@@ -1,0 +1,40 @@
+.bg-toned-1 {
+    background-color: #ededed;
+}
+
+.bg-toned-2 {
+    background-color: #f0f0f0;
+}
+
+.bg-toned-3 {
+    background-color: #f7f7f7;
+}
+
+.bg-sent {
+    background-color: #ddf8c6;
+}
+
+.bg-received {
+    background-color: #f7f7f7;
+}
+
+.list-group-item.active {
+    background-color: #ebebeb !important;
+    border-color: #aed248;
+}
+
+.avatar {
+    object-fit: cover;
+    width: 40px;
+    height: 40px;
+}
+
+.backround-pattern {
+    background-image: url('/assets/images/doodles.png');
+    background-repeat: repeat;
+}
+
+.message-bubble {
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+    border-radius: 7.5px;
+}

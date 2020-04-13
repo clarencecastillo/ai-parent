@@ -1,0 +1,79 @@
+<div class="bg-white shadow-lg w-100 h-100 overflow-hidden" [style.border-radius]="'10px'">
+    <div class="d-flex w-100 h-100">
+        <div class="w-25 d-flex flex-column border-right" style="min-width: 400px;">
+            <div class="d-flex justify-content-between align-items-center bg-toned-1 flex-shrink-0" [style.height]="'60px'">
+                <img class="avatar avatar-sm rounded-circle ml-4" [src]="userAvatarUrl">
+                <div>
+                    <ion-icon class="btn btn-clear" name="create-outline" style="font-size: 18px;"></ion-icon>
+                    <ion-icon class="btn btn-clear ml-1 mr-2" name="chevron-down-outline" style="font-size: 18px;"></ion-icon>
+                </div>
+            </div>
+            <div class="d-flex bg-toned-3 p-2 flex-shrink-0">
+                <div class="input-group flex-grow-1">
+                    <div class="d-flex align-items-center bg-white w-100 pl-3 pr-4" [style.border-radius]="'18px'">
+                        <ion-icon class="btn btn-clear pr-3" name="search-outline" style="font-size: 18px;"></ion-icon>
+                        <input type="text" class="form-control border-0" placeholder="Search or start new chat" style="font-size: 14px;">
+                    </div>
+                </div>
+            </div>
+            <div class="list-group list-group-flush h-100 flex-grow-1">
+                <button class="list-group-item d-flex list-group-item-action active align-items-center" *ngFor="let conversation of conversations" (click)="selectConversation(conversation.id)">
+                    <img class="avatar rounded-circle mr-4" [src]="conversation.contact.avatarUrl">
+                    <div class="w-100 py-1">
+                        <div class="d-flex justify-content-between" [style.line-height]="'18px'">
+                            <strong class="text-dark">{{conversation.contact.userName}}</strong>
+                            <small class="text-muted">{{conversation.lastMessageTime | amTimeAgo : false : timeFormatter }}</small>
+                        </div>
+                        <span class="text-secondary" style="font-size: 14px;">{{conversation.lastMessageContentPreview | slice:0:40}}</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+        <div class="w-75">
+            <div class="d-flex h-100 flex-column" *ngIf="selectedConversation">
+                <div class="bg-toned-1 flex-shrink-0 d-flex align-items-center px-2" style="height: 60px;">
+                    <div class="btn text-left d-flex align-items-center flex-grow-1 pl-3">
+                        <img class="avatar rounded-circle mr-3" [src]="selectedConversation.contact.avatarUrl">
+                        <div class="w-100" [style.line-height]="'18px'">
+                            <strong class="text-dark d-block">{{selectedConversation.contact.userName}}</strong>
+                            <span class="text-secondary" style="font-size: 14px;">online</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <ion-icon class="btn btn-clear mx-1" name="search-outline" style="font-size: 18px;"></ion-icon>
+                        <ion-icon class="btn btn-clear mx-1" name="attach-outline" style="font-size: 18px;"></ion-icon>
+                        <ion-icon class="btn btn-clear ml-1" name="ellipsis-vertical" style="font-size: 18px;"></ion-icon>
+                    </div>
+                </div>
+                <div class="flex-grow-1 backround-pattern overflow-auto">
+                    <ng-container *ngFor="let message of selectedConversation.messages">
+                        <div *ngIf="message.type == 'date'" class="d-flex align-items-center px-4 flex-column my-3">
+                            <div class="text-dark text-center p-2 message-bubble" [style.line-height]="'14px'" style="background-color: #e2f2fb;">
+                                <small style="font-size: 12px;">{{message.time | amDateFormat : 'dddd' | uppercase}}</small>
+                            </div>
+                        </div>
+                        <div *ngIf="message.type == 'warning'" class="d-flex align-items-center px-4 flex-column my-3">
+                            <div class="alert alert-warning text-dark w-75 text-center p-2 message-bubble" [style.line-height]="'14px'" style="font-size: 14px;">
+                                <ion-icon class="text-secondary pr-2" name="lock-closed" style="font-size: 10px;"></ion-icon>
+                                <small>Messages you send to this chat and calls are secured with end-to-end encryption. Click for more info.</small>
+                            </div>
+                        </div>
+                        <div *ngIf="message.type == 'message'" class="d-flex px-4 flex-column my-3" [ngClass]="{'align-items-end': !message.from, 'align-items-start': message.from}">
+                            <div class="px-3 py-2 border-0 position-relative message-bubble pr-5" style="max-width: 75%;" [ngClass]="{'bg-sent': !message.from, 'bg-received': message.from}">
+                                <span class="pr-4" [style.font-size]="'14px'">{{message.content}}</span>
+                                <small class="text-muted position-absolute" style="right: 12px; bottom: 0px;">{{message.time | amDateFormat : 'HH:mm'}}</small>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+                <div class="d-flex p-2 align-items-center bg-toned-2 flex-shrink-0" style="height: 60px;">
+                    <ion-icon class="btn btn-clear mr-2" name="happy-outline" style="font-size: 28px;"></ion-icon>
+                    <div class="input-group flex-grow-1">
+                        <input #messageInput type="text" class="form-control border-0" style="border-radius: 1rem;" placeholder="Type a message" (keyup.enter)="send(messageInput.value); messageInput.value='';">
+                    </div>
+                    <ion-icon class="btn btn-clear ml-2" name="mic-outline" style="font-size: 28px;"></ion-icon>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
