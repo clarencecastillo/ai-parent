@@ -20,9 +20,12 @@ let conversations = new Map();
 
 app.post('/api/chat', (req, res) => {
 
-  const id = conversations.size + 1 + '';
-  const conversation = new chat.Conversation(id);
-  conversations.set(id, conversation);
+  const id = req.body.id;
+
+  if (!conversations.has(id)) {
+    const conversation = new chat.Conversation(id);
+    conversations.set(id, conversation);
+  }
 
   res.json({
     status: 'ok',

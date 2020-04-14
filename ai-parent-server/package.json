@@ -17,6 +17,6 @@
     "opn": "^6.0.0",
     "socket.io": "^2.3.0",
     "static-server": "^2.2.1",
-    "swipl": "^1.0.5"
+    "swipl-stdio": "^1.0.4"
   }
 }

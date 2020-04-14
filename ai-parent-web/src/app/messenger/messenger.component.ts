@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Conversation, MessageService, Message } from '../message.service';
+import { Conversation, MessageService } from '../message.service';
 import { Moment } from 'moment';
 import { ContactService } from '../contact.service';
 
@@ -21,6 +21,18 @@ export class MessengerComponent implements OnInit {
     this.contactService.getContacts().forEach(async contact => {
       const conversation = await this.messageService.startConversation(contact);
       this.conversations.push(conversation);
+    });
+
+    this.messageService.notification.subscribe(notification => {
+
+      if (!this.selectedConversation) {
+        return;
+      }
+
+      setTimeout(() => {
+        const messageElement = document.querySelector('#' + notification.messageId);
+        messageElement.scrollIntoView({ behavior: 'smooth' });
+      });
     });
   }
 

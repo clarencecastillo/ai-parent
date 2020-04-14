@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="list-group list-group-flush h-100 flex-grow-1">
-                <button class="list-group-item d-flex list-group-item-action active align-items-center" *ngFor="let conversation of conversations" (click)="selectConversation(conversation.id)">
+                <button class="list-group-item d-flex list-group-item-action align-items-center" [ngClass]="{'active': selectedConversation && conversation.id == selectedConversation.id}" *ngFor="let conversation of conversations" (click)="selectConversation(conversation.id)">
                     <img class="avatar rounded-circle mr-4" [src]="conversation.contact.avatarUrl">
                     <div class="w-100 py-1">
                         <div class="d-flex justify-content-between" [style.line-height]="'18px'">
@@ -47,18 +47,18 @@
                 </div>
                 <div class="flex-grow-1 backround-pattern overflow-auto">
                     <ng-container *ngFor="let message of selectedConversation.messages">
-                        <div *ngIf="message.type == 'date'" class="d-flex align-items-center px-4 flex-column my-3">
+                        <div [id]="message.id" *ngIf="message.type == 'date'" class="d-flex align-items-center px-4 flex-column my-3">
                             <div class="text-dark text-center p-2 message-bubble" [style.line-height]="'14px'" style="background-color: #e2f2fb;">
                                 <small style="font-size: 12px;">{{message.time | amDateFormat : 'dddd' | uppercase}}</small>
                             </div>
                         </div>
-                        <div *ngIf="message.type == 'warning'" class="d-flex align-items-center px-4 flex-column my-3">
+                        <div [id]="message.id" *ngIf="message.type == 'warning'" class="d-flex align-items-center px-4 flex-column my-3">
                             <div class="alert alert-warning text-dark w-75 text-center p-2 message-bubble" [style.line-height]="'14px'" style="font-size: 14px;">
                                 <ion-icon class="text-secondary pr-2" name="lock-closed" style="font-size: 10px;"></ion-icon>
                                 <small>Messages you send to this chat and calls are secured with end-to-end encryption. Click for more info.</small>
                             </div>
                         </div>
-                        <div *ngIf="message.type == 'message'" class="d-flex px-4 flex-column my-3" [ngClass]="{'align-items-end': !message.from, 'align-items-start': message.from}">
+                        <div [id]="message.id" *ngIf="message.type == 'message'" class="d-flex px-4 flex-column my-3" [ngClass]="{'align-items-end': !message.from, 'align-items-start': message.from}">
                             <div class="px-3 py-2 border-0 position-relative message-bubble pr-5" style="max-width: 75%;" [ngClass]="{'bg-sent': !message.from, 'bg-received': message.from}">
                                 <span class="pr-4" [style.font-size]="'14px'">{{message.content}}</span>
                                 <small class="text-muted position-absolute" style="right: 12px; bottom: 0px;">{{message.time | amDateFormat : 'HH:mm'}}</small>

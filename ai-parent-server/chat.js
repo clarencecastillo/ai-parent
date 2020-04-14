@@ -5,14 +5,16 @@ class Conversation {
     constructor(id) {
         this.id = id;
         this.parent = new api.Parent();
-        this.kid = new api.Kid(this.parent.swipl);
+        this.kid = new api.Kid(this.parent.engine);
         this.context = undefined;
     }
     
-    handle(message, socket) {
+    async handle(message, socket) {
         if (message === 'start') {
-            this.context = this.parent.ask();
-        } else {
+            if (!this.context) {
+                this.context = await this.parent.ask();
+            }
+        } else if (['yes', 'no'].includes(message)) {
             
             if (message === 'yes') {
                 this.kid.yes(this.context);
@@ -20,7 +22,7 @@ class Conversation {
                 this.kid.no(this.context);
             }
             
-            this.context = this.parent.ask(this.context);
+            this.context = await this.parent.ask(this.context);
         }
         
         this.send(socket);
