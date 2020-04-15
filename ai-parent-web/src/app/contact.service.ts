@@ -16,7 +16,7 @@ export class ContactService {
       id: 'xijinping',
       avatarUrl: '../assets/images/contacts/xijinping.jpg',
       userName: 'Xi Jinping🇨🇳',
-      persona: 'en'
+      persona: 'zh'
     }
   ];
 

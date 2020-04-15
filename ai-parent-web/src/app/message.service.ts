@@ -6,6 +6,7 @@ import { Observable, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as i18n from 'roddeh-i18n';
 import * as standardEnglishPersona from '../assets/personas/standard-en.json';
+import * as standardChinesePersona from '../assets/personas/standard-zh.json';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +22,10 @@ export class MessageService {
     'en': {
       'chat': i18n.create({ values: standardEnglishPersona.conversation }),
       'report': i18n.create({ values: standardEnglishPersona.report })
+    },
+    'zh': {
+      'chat': i18n.create({ values: standardChinesePersona.conversation }),
+      'report': i18n.create({ values: standardChinesePersona.report })
     }
   };
 
@@ -41,7 +46,8 @@ export class MessageService {
     this.socket.fromEvent('message')
       .subscribe(async (data: string) => {
         const [id, content] = data.split(':');
-        const message = await this.receiveMessage(id, this.translations.en.chat(content));
+        const translator = this.translations[this.conversations.get(id).contact.persona];
+        const message = await this.receiveMessage(id, translator.chat(content));
         this.notificationSubject.next({
           conversationId: id,
           messageId: message.id
@@ -87,20 +93,21 @@ export class MessageService {
   }
 
   private async getReport(conversationId: string): Promise<string> {
+    const translator = this.translations[this.conversations.get(conversationId).contact.persona];
     const data = await this.http.get<Activity[]>(`http://localhost:8000/api/chat/${conversationId}/report`)
       .toPromise();
    
     let report = [`Here's a summary of what you did in school today:`];
     data.forEach(activity => {
-      report.push(`\n${this.SYMBOLS[activity.answer]} ${this.translations.en.report(activity.name)}:`);
+      report.push(`\n${this.SYMBOLS[activity.answer]} ${translator.report(activity.name)}:`);
       if (activity.answer === 'no') {
         report.push(`\t<nothing>`);
         return;
       }
       activity.targets.forEach(target => {
-        report.push(`\t${this.SYMBOLS[target.answer]} ${this.translations.en.report(target.name)}`);
+        report.push(`\t${this.SYMBOLS[target.answer]} ${translator.report(target.name)}`);
         target.feedbacks.forEach(feedback => {
-          report.push(`\t\t${this.SYMBOLS[feedback.answer]} ${this.translations.en.report(feedback.name)}`);
+          report.push(`\t\t${this.SYMBOLS[feedback.answer]} ${translator.report(feedback.name)}`);
         });
       });
     });
