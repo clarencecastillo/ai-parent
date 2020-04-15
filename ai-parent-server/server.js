@@ -35,7 +35,7 @@ app.post('/api/chat', (req, res) => {
 
 app.delete('/api/chat/:id', (req, res) => {
 
-  const id = req.body.id;
+  const id = req.params.id;
 
   if (!conversations.has(id)) {
     throw new Error(`Conversation with id ${id} does not exist`);
@@ -63,6 +63,7 @@ const io = socketio(http.createServer(app));
 io.on('connection', socket => {
 
   socket.on('message', data => {
+    console.log('socket received: ' + data);
     const [id, message] = data.split(':');
     const chat = conversations.get(id);
     chat.handle(message, socket);

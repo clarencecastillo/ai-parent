@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Conversation, MessageService } from '../message.service';
+import { Conversation, MessageService, ConversationPreview } from '../message.service';
 import { Moment } from 'moment';
-import { ContactService, Contact } from '../contact.service';
 
 @Component({
   selector: 'tcs-messenger',
@@ -10,25 +9,39 @@ import { ContactService, Contact } from '../contact.service';
 })
 export class MessengerComponent implements OnInit {
 
+  conversations: ConversationPreview[];
   userAvatarUrl = 'https://avatars0.githubusercontent.com/u/5035728?s=400&u=544ea1899a8854498922c8bce153c83a31182be5&v=4';
-  conversations: Conversation[] = [];
   selectedConversation: Conversation;
 
+  input: string;
+
   constructor(
-    private messageService: MessageService,
-    private contactService: ContactService
+    private messageService: MessageService
   ) {
 
-    this.initConversations(this.contactService.getContacts());
+    this.initConversations();
 
-    this.messageService.notification.subscribe(notification => {
+    this.messageService.notification.subscribe(async notification => {
 
-      if (!this.selectedConversation) {
+      const { conversationId, message } = notification;
+
+      const conversationPreview = this.conversations.find(c => c.id === conversationId);
+      conversationPreview.lastMessageContentPreview = message.prefix + message.content;
+      conversationPreview.lastMessageTime = message.time;
+
+      this.conversations = [
+        conversationPreview,
+        ...this.conversations.filter(c => c.id !== conversationId)
+      ];
+
+      if (!this.selectedConversation || this.selectedConversation.id !== conversationId) {
         return;
       }
 
+      this.selectedConversation.messages.push(message);
+
       setTimeout(() => {
-        const messageElement = document.querySelector('#' + notification.messageId);
+        const messageElement = document.querySelector('#' + message.id);
         messageElement.scrollIntoView({ behavior: 'smooth' });
       });
     });
@@ -37,9 +50,8 @@ export class MessengerComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  async initConversations(contacts: Contact[]) {
-    this.conversations = await Promise.all(contacts
-      .map(contact => this.messageService.getConversation(contact)));
+  async initConversations() {
+    this.conversations = await this.messageService.getConversationPreviews();
   }
 
   timeFormatter(m: Moment) {
@@ -50,16 +62,25 @@ export class MessengerComponent implements OnInit {
     }
   }
 
-  async send(content: string) {
-    const message = await this.messageService.sendMessage(this.selectedConversation.id, content);
-    setTimeout(() => {
-      const messageElement = document.querySelector('#' + message.id);
-      messageElement.scrollIntoView({ behavior: 'smooth' });
-    });
+  async sendInput() {
+    const content = this.input.trim();
+    if (!this.input.trim()) {
+      return;
+    }
+
+    this.input = "";
+    await this.messageService.sendMessage(this.selectedConversation.id, content);
   }
 
-  selectConversation(id: string) {
-    this.selectedConversation = this.conversations.find(c => c.id === id);
+  async selectConversation(id: string) {
+    this.selectedConversation = await this.messageService.getStoredConversation(id);
+    const lastMessage = this.selectedConversation.messages[this.selectedConversation.messages.length - 1];
+
+    setTimeout(() => {
+      const messageElement = document.querySelector('#' + lastMessage.id);
+      messageElement.scrollIntoView();
+    });
+
   }
 
 }

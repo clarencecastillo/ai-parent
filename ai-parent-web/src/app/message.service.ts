@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 import { HttpClient } from '@angular/common/http';
-import { Contact } from './contact.service';
+import { Contact, ContactService } from './contact.service';
 import { Observable, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { TranslatorService, Translator } from './translator.service';
@@ -15,7 +15,7 @@ export class MessageService {
   private notificationSubject: Subject<Notification>;
   public readonly notification: Observable<Notification>;
 
-  private prefixedMessages: Message[] = [
+  private readonly PREFIXED_MESSAGES: Message[] = [
     {
       id: 'date-alert',
       prefix: '',
@@ -37,10 +37,13 @@ export class MessageService {
     'no': '❌'
   };
 
+  private readonly DELAY_TIME = 500;
+
   constructor(
     private http: HttpClient,
     private socket: Socket,
     private translatorService: TranslatorService,
+    private contactService: ContactService,
     private ngf: NgForage
   ) {
 
@@ -70,9 +73,11 @@ export class MessageService {
 
         this.receiveMessage(id, content, prefix);
       });
+
+    // this.ngf.clear();
   }
 
-  private async getStoredConversation(id: string): Promise<Conversation> {
+  public async getStoredConversation(id: string): Promise<Conversation> {
     return this.ngf.getItem<Conversation>(id);
   }
 
@@ -88,11 +93,6 @@ export class MessageService {
 
     const message = this.buildMessage(content, 'received', prefix);
     this.addMessage(conversationId, message);
-
-    this.notificationSubject.next({
-      conversationId: conversationId,
-      messageId: message.id
-    });
   }
 
   private async getReport(conversationId: string, translator: Translator): Promise<string> {
@@ -123,10 +123,14 @@ export class MessageService {
   private async addMessage(conversationId: string, message: Message) {
     const conversation = await this.getStoredConversation(conversationId);
     conversation.messages.push(message);
-    conversation.lastMessageContentPreview = message.content;
+    conversation.lastMessageContentPreview = message.prefix + message.content;
     conversation.lastMessageTime = message.time;
-
     await this.storeConversation(conversation);
+
+    this.notificationSubject.next({
+      conversationId: conversationId,
+      message: message
+    });
   }
 
   private buildMessage(content: string, type: 'received' | 'sent', prefix: string = ''): Message {
@@ -139,6 +143,38 @@ export class MessageService {
     };
   }
 
+  private async startConversation(id: string) {
+    await this.http.post<{ status: string, id: string }>('http://localhost:8000/api/chat', {
+      id: id
+    }).toPromise();
+  }
+
+  private deleteConversation(id: string) {
+    return this.http.delete<{ status: string }>(`http://localhost:8000/api/chat/${id}`).toPromise();
+  }
+
+  private async buildConversation(contact: Contact): Promise<Conversation> {
+    const translator = this.translatorService.getTranslator(contact.persona);
+    const namePrompt = translator.general('prompt_name', { name: contact.name });
+    const namePromptMessage = this.buildMessage(namePrompt, 'received');
+
+    const conversation = {
+      contact,
+      name: null,
+      id: contact.id,
+      messages: [
+        ...this.PREFIXED_MESSAGES,
+        namePromptMessage
+      ],
+      lastMessageTime: namePromptMessage.time,
+      lastMessageContentPreview: namePromptMessage.content,
+      started: false
+    };
+
+    await this.storeConversation(conversation);
+    return conversation;
+  }
+
   public async getConversation(contact: Contact): Promise<Conversation> {
     const conversation = await this.getStoredConversation(contact.id);
 
@@ -146,76 +182,108 @@ export class MessageService {
       return conversation;
     }
 
-    return this.http.post<{ status: string, id: string }>('http://localhost:8000/api/chat', {
-      id: contact.id
-    }).toPromise().then(async res => {
+    return this.buildConversation(contact);
+  }
 
-      const translator = this.translatorService.getTranslator(contact.persona);
-      const namePrompt = translator.general('prompt_name', { name: contact.name });
-      const namePromptMessage = this.buildMessage(namePrompt, 'received');
-
-      const conversation = {
-        contact,
-        name: null,
-        id: contact.id,
-        messages: [
-          ...this.prefixedMessages,
-          namePromptMessage
-        ],
-        lastMessageTime: namePromptMessage.time,
-        lastMessageContentPreview: namePromptMessage.content,
-        started: false
-      };
-
-      await this.storeConversation(conversation);
-      return conversation;
-    });
+  private async resetConversation(id: string) {
+    await this.deleteConversation(id);
+    const conversation = await this.getStoredConversation(id);
+    conversation.name = null;
+    conversation.started = false;
+    await this.storeConversation(conversation);
   }
 
   public async sendMessage(conversationId: string, content: string): Promise<Message> {
+
     const conversation = await this.ngf.getItem<Conversation>(conversationId);
-
     const translator = this.translatorService.getTranslator(conversation.contact.persona);
-
     const message = this.buildMessage(content, 'sent');
-    this.addMessage(conversationId, message);
+    let messageBack: { content: string, prefix: string } = undefined;
 
     if (!conversation.name) {
       conversation.name = content;
+      await this.storeConversation(conversation);
       console.log(`[${conversationId}] name set: ${content}`);
-      const greeting = translator.general('greet', { name: content });
-      this.receiveMessage(conversationId, greeting);
-      return message;
+
+      messageBack = {
+        content: translator.general('greet', { name: content }),
+        prefix: ''
+      };
     }
 
+    content = content.toLocaleLowerCase();
     if (!conversation.started) {
+      if (content === 'yes') {
+        await this.startConversation(conversationId);
+        console.log(`[${conversationId}] conversation started`);
 
-      if (content !== 'yes') {
-        return message;
+        conversation.started = true;
+        await this.storeConversation(conversation);
+
+        this.socket.emit("message", conversationId + ':start');
       }
+    } else {
+      if (['yes', 'no'].includes(content)) {
+        this.socket.emit("message", conversationId + ':' + content);
+      } else if (content === 'reset') {
+        await this.resetConversation(conversationId);
 
-      content = 'start';
-      conversation.started = true;
-      console.log(`[${conversationId}] conversation started`);
-    } else if (!['yes', 'no'].includes(content)) {
-      console.log(`[${conversationId}] invalid reply: ${content}`);
+        const contact = conversation.contact;
+        const translator = this.translatorService.getTranslator(contact.persona);
+        const namePrompt = translator.general('prompt_name', { name: contact.name });
 
-      const lastReceivedMessage = conversation.messages
-        .slice().reverse().find(m => m.type === 'message-received');
+        messageBack = {
+          content: namePrompt,
+          prefix: translator.general('reset') + ' '
+        };
+      } else {
 
-      this.receiveMessage(conversationId, lastReceivedMessage.content, translator.error() + ' ');
-      return message;
+        console.log(`[${conversationId}] invalid reply: ${content}`);
+        const lastReceivedMessage = conversation.messages
+          .slice().reverse().find(m => m.type === 'message-received');
+
+        messageBack = {
+          content: lastReceivedMessage.content,
+          prefix: translator.error() + ' '
+        };
+      }
+    }
+    
+    if (messageBack) {
+
+      // simulate waiting
+      setTimeout(() => {
+        this.receiveMessage(conversationId, messageBack.content, messageBack.prefix);
+      }, this.DELAY_TIME);
     }
 
-    this.socket.emit("message", conversationId + ':' + content);
+    await this.addMessage(conversationId, message);
     return message;
+  }
+
+  public async getConversationPreviews(contacts: Contact[] = this.contactService.getContacts()): Promise<ConversationPreview[]> {
+    return Promise.all(contacts.map(contact => this.getConversation(contact)
+      .then(c => ({
+        id: c.id,
+        contact: c.contact,
+        lastMessageContentPreview: c.lastMessageContentPreview,
+        lastMessageTime: c.lastMessageTime
+      }))
+    ));
   }
 
 }
 
+export type ConversationPreview = {
+  id: string;
+  contact: Contact;
+  lastMessageContentPreview: string;
+  lastMessageTime: number;
+}
+
 export type Notification = {
   conversationId: string;
-  messageId: string;
+  message: Message;
 }
 
 export type MessageType = 'message-sent' | 'message-received' | 'date' | 'warning';
@@ -228,11 +296,7 @@ export type Message = {
   type: MessageType;
 }
 
-export type Conversation = {
-  id: string;
-  contact: Contact;
-  lastMessageContentPreview: string;
-  lastMessageTime: number;
+export type Conversation = ConversationPreview & {
   messages: Message[];
   name: string;
   started: boolean;

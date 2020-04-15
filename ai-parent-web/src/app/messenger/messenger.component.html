@@ -18,13 +18,15 @@
             </div>
             <div class="list-group list-group-flush h-100 flex-grow-1">
                 <button class="list-group-item d-flex list-group-item-action align-items-center" [ngClass]="{'active': selectedConversation && conversation.id == selectedConversation.id}" *ngFor="let conversation of conversations" (click)="selectConversation(conversation.id)">
-                    <img class="avatar rounded-circle mr-4" [src]="conversation.contact.avatarUrl">
+                    <img class="avatar rounded-circle mr-4 flex-shrink-0" [src]="conversation.contact.avatarUrl">
                     <div class="w-100 py-1">
                         <div class="d-flex justify-content-between" [style.line-height]="'18px'">
                             <strong class="text-dark">{{conversation.contact.displayName}}</strong>
                             <small class="text-muted">{{conversation.lastMessageTime | amTimeAgo : false : timeFormatter }}</small>
                         </div>
-                        <span class="text-secondary" style="font-size: 14px;">{{conversation.lastMessageContentPreview | slice:0:40}}</span>
+                        <span class="text-secondary" style="font-size: 14px;">
+                            {{conversation.lastMessageContentPreview | slice:0:34}}{{conversation.lastMessageContentPreview.length > 34 ? '...' : ''}}
+                        </span>
                     </div>
                 </button>
             </div>
@@ -69,7 +71,7 @@
                 <div class="d-flex p-2 align-items-center bg-toned-2 flex-shrink-0" style="height: 60px;">
                     <ion-icon class="btn btn-clear mr-2" name="happy-outline" style="font-size: 28px;"></ion-icon>
                     <div class="input-group flex-grow-1">
-                        <input #messageInput type="text" class="form-control border-0" style="border-radius: 1rem;" placeholder="Type a message" (keyup.enter)="send(messageInput.value); messageInput.value='';">
+                        <input #messageInput type="text" class="form-control border-0" style="border-radius: 1rem;" placeholder="Type a message" [(ngModel)]="input" (keyup.enter)="sendInput()">
                     </div>
                     <ion-icon class="btn btn-clear ml-2" name="mic-outline" style="font-size: 28px;"></ion-icon>
                 </div>

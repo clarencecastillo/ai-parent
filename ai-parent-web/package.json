@@ -21,6 +21,7 @@
     "@angular/router": "~9.1.1",
     "@types/uuid": "^7.0.2",
     "bootstrap": "^4.4.1",
+    "localforage": "^1.7.3",
     "moment": "^2.24.0",
     "ngforage": "^5.0.1",
     "ngx-moment": "^3.5.0",
