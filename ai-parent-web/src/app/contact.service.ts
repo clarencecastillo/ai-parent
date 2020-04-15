@@ -7,18 +7,18 @@ export class ContactService {
 
   private contacts: Contact[] = [
     {
-      id: 'gangstermama',
-      avatarUrl: '../assets/images/contacts/gangstermom.jpg',
-      displayName: 'Ah Lian Mama 🔥👩🔥',
-      persona: 'gangster-en',
-      name: 'Ah Lian Mom'
-    },
-    {
       id: 'genericmama',
       avatarUrl: '../assets/images/contacts/genericmom.jpg',
       displayName: 'Generic Mama 👩',
       persona: 'standard-en',
       name: 'Generic Mom'
+    },
+    {
+      id: 'gangstermama',
+      avatarUrl: '../assets/images/contacts/gangstermom.jpg',
+      displayName: 'Ah Lian Mama 🔥👩🔥',
+      persona: 'gangster-en',
+      name: 'Ah Lian Mom'
     },
     {
       id: 'leehsienloong',

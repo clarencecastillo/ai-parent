@@ -1,4 +1,4 @@
-const opn = require('opn');
+const open = require('open');
 const express = require('express');
 const http = require('http');
 const socketio = require('socket.io');
@@ -7,6 +7,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser')
 
 const app = express();
+
+app.use(express.static('public'));
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -84,17 +86,4 @@ io.on('connection', socket => {
 io.listen(8081);
 app.listen(8000);
 
-// webSocketServer.on('listening', () => {
-//   const port = webSocketServer.address().port;
-//   console.log(`AI Parent WebSocket Server listening on port ${port}...`);
-// });
-
-// const webServer = new StaticServer({
-//   rootPath: 'static',
-//   port: 8080
-// });
-
-// webServer.start(() => {
-//   console.log(`Static Server listening on port ${webServer.port}...`);
-//   opn(`http://localhost:${webServer.port}`);
-// });
+open('http://localhost:8000');
