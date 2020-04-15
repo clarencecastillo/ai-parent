@@ -1,15 +1,15 @@
 {
     "general": {
-        "yes": "yes",
-        "no": "no",
-        "prompt_name": "Hello there! My name is %{name}. What's yours?",
-        "greet": "Hi %{name}, that's a nice name! I'm going to ask you some questions about how you spent your time in school today. You can just reply me with a 'yes' or a 'no'. If you type something else, I'll just pretend I didn't see that and ask you the same question again. Now, are you ready to start?",
-        "connector_1": "I see.",
-        "connector_2": "Okay!",
-        "connector_3": "Got it.",
-        "connector_4": "Hmm..",
-        "connector_5": "Alright.",
-        "summary": "Excellent work! I think that's enough questions for now. Here's a summary of what you did in school today:"
+        "yes": "是",
+        "no": "不是",
+        "prompt_name": "你好！我的名字是%{名字}。你的是?",
+        "greet": "你好%{名字}，那真是个好名字！我要问一些有关你今天在学校怎么度过的问题。您可以只回答“是”或“不是”。如果你输入其他内容，我只会假装没看到，然后再次问您同样的问题。现在，你准备好开始了吗？",
+        "connector_1": "我知道了。",
+        "connector_2": "好的!",
+        "connector_3": "明白了。",
+        "connector_4": "嗯。。。",
+        "connector_5": "好的。",
+        "summary": "做得好! 我认为目前已经问了足够的问题了。以下是你今天在学校所做的总结："
     },
     "conversation": {
         "activity_eat": "你今天在学校吃了吗?",
