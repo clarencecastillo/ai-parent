@@ -14,7 +14,8 @@
         "error_5": "Please reply only 'yes' or 'no'.",
         "summary": "Excellent work! I think that's enough questions for now. Here's a summary of what you did in school today:",
         "nothing": "nothing",
-        "reset": "Let's start over."
+        "reset": "Let's start over.",
+        "done": "If you want to start over, say 'reset' and we'll start over from the top."
     },
     "conversation": {
         "activity_eat": "Did you eat something in school today?",

@@ -10,28 +10,28 @@ export class ContactService {
       id: 'gangstermama',
       avatarUrl: '../assets/images/contacts/gangstermom.jpg',
       displayName: 'Ah Lian Mama 🔥👩🔥',
-      persona: 'en',
+      persona: 'gangster-en',
       name: 'Ah Lian Mom'
     },
     {
       id: 'genericmama',
       avatarUrl: '../assets/images/contacts/genericmom.jpg',
       displayName: 'Generic Mama 👩',
-      persona: 'en',
+      persona: 'standard-en',
       name: 'Generic Mom'
     },
     {
       id: 'leehsienloong',
       avatarUrl: '../assets/images/contacts/leehsienloong.jpeg',
       displayName: 'Official LHL 🇸🇬🇸🇬🇸🇬',
-      persona: 'en',
+      persona: 'standard-en',
       name: 'Lee Hsien Loong'
     },
     {
       id: 'xijinping',
       avatarUrl: '../assets/images/contacts/xijinping.jpg',
       displayName: '🇨🇳 Xi Dada 🇨🇳',
-      persona: 'zh',
+      persona: 'standard-zh',
       name: 'Xi Jinping'
     }
   ];

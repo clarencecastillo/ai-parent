@@ -27,11 +27,20 @@ app.post('/api/chat', (req, res) => {
     conversations.set(id, conversation);
   }
 
+  console.log(`api: started conversation with id ${id}`);
   res.json({
     status: 'ok',
     id: id
   });
 });
+
+app.post('/api/reset', (req, res) => {
+  conversations = new Map();
+  console.log(`api: cleared all conversations`);
+  res.json({
+    status: 'ok'
+  });
+})
 
 app.delete('/api/chat/:id', (req, res) => {
 
@@ -41,6 +50,7 @@ app.delete('/api/chat/:id', (req, res) => {
     throw new Error(`Conversation with id ${id} does not exist`);
   }
 
+  console.log(`api: deleted conversation with id ${id}`);
   conversations.delete(id);
   res.json({
     status: 'ok'
@@ -54,6 +64,7 @@ app.get('/api/chat/:id/report', async (req, res) => {
     throw new Error(`Conversation with id ${id} does not exist`);
   }
 
+  console.log(`api: fetched report for conversation with id ${id}`);
   const report = await conversations.get(id).parent.report();
   res.json(report);
 })

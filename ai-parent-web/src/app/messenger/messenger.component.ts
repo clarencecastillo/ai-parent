@@ -10,7 +10,7 @@ import { Moment } from 'moment';
 export class MessengerComponent implements OnInit {
 
   conversations: ConversationPreview[];
-  userAvatarUrl = 'https://avatars0.githubusercontent.com/u/5035728?s=400&u=544ea1899a8854498922c8bce153c83a31182be5&v=4';
+  userAvatarUrl = '../../assets/images/contacts/kid.jpeg';
   selectedConversation: Conversation;
 
   input: string;
@@ -48,6 +48,12 @@ export class MessengerComponent implements OnInit {
   }
 
   ngOnInit(): void {
+  }
+
+  async clearConversations() {
+    await this.messageService.clearConversations();
+    this.initConversations();
+    this.selectedConversation = undefined;
   }
 
   async initConversations() {

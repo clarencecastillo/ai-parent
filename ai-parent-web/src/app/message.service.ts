@@ -56,12 +56,14 @@ export class MessageService {
 
         console.log(`[${id}] received: ${content}`);
 
-        const contact = await this.getStoredConversation(id).then(c => c.contact);
-        const translator = this.translatorService.getTranslator(contact.persona);
+        const conversation = await this.getStoredConversation(id);
+        const translator = this.translatorService.getTranslator(conversation.contact.persona);
 
         let prefix = '';
         if (content === 'report') {
           content = await this.getReport(id, translator);
+          conversation.done = true;
+          await this.storeConversation(conversation);
         } else {
 
           if (['yes', 'no'].includes(replyTo)) {
@@ -75,6 +77,11 @@ export class MessageService {
       });
 
     // this.ngf.clear();
+  }
+
+  public async clearConversations() {
+    await this.http.post(`http://localhost:8000/api/reset`, {}).toPromise();
+    await this.ngf.clear();
   }
 
   public async getStoredConversation(id: string): Promise<Conversation> {
@@ -168,7 +175,8 @@ export class MessageService {
       ],
       lastMessageTime: namePromptMessage.time,
       lastMessageContentPreview: namePromptMessage.content,
-      started: false
+      started: false,
+      done: false
     };
 
     await this.storeConversation(conversation);
@@ -190,6 +198,7 @@ export class MessageService {
     const conversation = await this.getStoredConversation(id);
     conversation.name = null;
     conversation.started = false;
+    conversation.done = false;
     await this.storeConversation(conversation);
   }
 
@@ -209,43 +218,49 @@ export class MessageService {
         content: translator.general('greet', { name: content }),
         prefix: ''
       };
-    }
-
-    content = content.toLocaleLowerCase();
-    if (!conversation.started) {
-      if (content === 'yes') {
-        await this.startConversation(conversationId);
-        console.log(`[${conversationId}] conversation started`);
-
-        conversation.started = true;
-        await this.storeConversation(conversation);
-
-        this.socket.emit("message", conversationId + ':start');
-      }
     } else {
-      if (['yes', 'no'].includes(content)) {
-        this.socket.emit("message", conversationId + ':' + content);
-      } else if (content === 'reset') {
-        await this.resetConversation(conversationId);
 
-        const contact = conversation.contact;
-        const translator = this.translatorService.getTranslator(contact.persona);
-        const namePrompt = translator.general('prompt_name', { name: contact.name });
-
-        messageBack = {
-          content: namePrompt,
-          prefix: translator.general('reset') + ' '
-        };
+      content = content.toLocaleLowerCase();
+      if (!conversation.started) {
+        if (content === 'yes') {
+          await this.startConversation(conversationId);
+          console.log(`[${conversationId}] conversation started`);
+  
+          conversation.started = true;
+          await this.storeConversation(conversation);
+  
+          this.socket.emit("message", conversationId + ':start');
+        }
       } else {
-
-        console.log(`[${conversationId}] invalid reply: ${content}`);
-        const lastReceivedMessage = conversation.messages
-          .slice().reverse().find(m => m.type === 'message-received');
-
-        messageBack = {
-          content: lastReceivedMessage.content,
-          prefix: translator.error() + ' '
-        };
+        if (content === 'reset') {
+          await this.resetConversation(conversationId);
+  
+          const namePrompt = translator.general('prompt_name', { name: conversation.contact.name });
+          messageBack = {
+            content: namePrompt,
+            prefix: translator.general('reset') + ' '
+          };
+  
+        } else if (conversation.done) {
+  
+          messageBack = {
+            content: translator.general('done'),
+            prefix: ''
+          };
+  
+        } else if (['yes', 'no'].includes(content)) {
+          this.socket.emit("message", conversationId + ':' + content);
+        } else {
+  
+          console.log(`[${conversationId}] invalid reply: ${content}`);
+          const lastReceivedMessage = conversation.messages
+            .slice().reverse().find(m => m.type === 'message-received');
+  
+          messageBack = {
+            content: lastReceivedMessage.content,
+            prefix: translator.error() + ' '
+          };
+        }
       }
     }
     
@@ -300,6 +315,7 @@ export type Conversation = ConversationPreview & {
   messages: Message[];
   name: string;
   started: boolean;
+  done: boolean;
 }
 
 export type Feedback = {

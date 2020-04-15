@@ -5,7 +5,7 @@
                 <img class="avatar avatar-sm rounded-circle ml-4" [src]="userAvatarUrl">
                 <div>
                     <ion-icon class="btn btn-clear" name="create-outline" style="font-size: 18px;"></ion-icon>
-                    <ion-icon class="btn btn-clear ml-1 mr-2" name="chevron-down-outline" style="font-size: 18px;"></ion-icon>
+                    <ion-icon (click)="clearConversations()" class="btn btn-clear ml-1 mr-2" name="refresh-outline" style="font-size: 18px;"></ion-icon>
                 </div>
             </div>
             <div class="d-flex bg-toned-3 p-2 flex-shrink-0">
@@ -32,6 +32,15 @@
             </div>
         </div>
         <div class="w-75">
+            <div class="d-flex align-items-center h-100" *ngIf="!selectedConversation">
+                <div class="text-center w-100">
+                    <img class="placeholder-img w-50" [src]="userAvatarUrl" [style.border-radius]="'50%'">
+                    <h2 class="my-4">AI Parent</h2>
+                    <small class="d-inline-block w-50 text-wrap">Made with ❤️ by Clarence Castillo (U1622291F) for CZ3005 Artificial Intelligence</small>
+                    <br><br>
+                    <span class="d-inline-block w-50 text-wrap">Nanyang Technological University</span>
+                </div>
+            </div>
             <div class="d-flex h-100 flex-column" *ngIf="selectedConversation">
                 <div class="bg-toned-1 flex-shrink-0 d-flex align-items-center px-2" style="height: 60px;">
                     <div class="btn text-left d-flex align-items-center flex-grow-1 pl-3">
@@ -45,6 +54,7 @@
                         <ion-icon class="btn btn-clear mx-1" name="search-outline" style="font-size: 18px;"></ion-icon>
                         <ion-icon class="btn btn-clear mx-1" name="attach-outline" style="font-size: 18px;"></ion-icon>
                         <ion-icon class="btn btn-clear ml-1" name="ellipsis-vertical" style="font-size: 18px;"></ion-icon>
+                        <ion-icon (click)="selectedConversation = undefined" class="btn btn-clear ml-1" name="close-outline" style="font-size: 18px;"></ion-icon>
                     </div>
                 </div>
                 <div class="flex-grow-1 backround-pattern overflow-auto">
