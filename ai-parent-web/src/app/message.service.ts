@@ -24,6 +24,11 @@ export class MessageService {
     }
   };
 
+  private SYMBOLS = {
+    'yes': '✅',
+    'no': '❌'
+  };
+
   constructor(
     private http: HttpClient,
     private socket: Socket
@@ -84,10 +89,22 @@ export class MessageService {
   private async getReport(conversationId: string): Promise<string> {
     const data = await this.http.get<Activity[]>(`http://localhost:8000/api/chat/${conversationId}/report`)
       .toPromise();
-    
-    let report = `Things you did in school today:\n`;
-    data.map(activity => `${activity.name}`)
-    return report;
+   
+    let report = [`Here's a summary of what you did in school today:`];
+    data.forEach(activity => {
+      report.push(`\n${this.SYMBOLS[activity.answer]} ${this.translations.en.report(activity.name)}:`);
+      if (activity.answer === 'no') {
+        report.push(`\t<nothing>`);
+        return;
+      }
+      activity.targets.forEach(target => {
+        report.push(`\t${this.SYMBOLS[target.answer]} ${this.translations.en.report(target.name)}`);
+        target.feedbacks.forEach(feedback => {
+          report.push(`\t\t${this.SYMBOLS[feedback.answer]} ${this.translations.en.report(feedback.name)}`);
+        });
+      });
+    });
+    return report.join('\n');
   }
 
   private addMessage(conversationId: string, content: string, type: MessageType, from: string) {
@@ -153,17 +170,17 @@ export type Conversation = {
 
 export type Feedback = {
   name: string;
-  answeredYes: boolean;
+  answer: string;
 }
 
 export type Target = {
   name: string;
-  answeredYes: boolean;
+  answer: string;
   feedbacks: Feedback[];
 }
 
 export type Activity = {
   name: string;
-  answeredYes: boolean;
+  answer: string;
   targets: Target[];
 }

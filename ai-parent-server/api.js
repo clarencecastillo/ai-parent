@@ -39,9 +39,9 @@ class Parent extends PrologEntity {
   async report_feedback(target, activity) {
     return Promise.all([
       this.query(`feedback_yes(F, ${target}, ${activity})`)
-        .then(results => results.map(r => ({ name: r['F'], answeredYes: true }))),
+        .then(results => results.map(r => ({ name: r['F'], answer: 'yes', }))),
       this.query(`feedback_no(F, ${target}, ${activity})`)
-        .then(results => results.map(r => ({ name: r['F'], answeredYes: false })))
+        .then(results => results.map(r => ({ name: r['F'], answer: 'no', })))
     ]).then(feedbacks => [].concat.apply([], feedbacks));
   }
 
@@ -51,14 +51,14 @@ class Parent extends PrologEntity {
         .then(results => Promise.all(
           results.map(async r => ({
             name: r['T'],
-            answeredYes: true,
+            answer: 'yes',
             feedbacks: await this.report_feedback(r['T'], activity)
           }))
         )),
       this.query(`target_no(T, ${activity})`)
         .then(results => results.map(r => ({
           name: r['T'],
-          answeredYes: false,
+          answer: 'no',
           feedbacks: []
         })))
     ]).then(targets => [].concat.apply([], targets));
@@ -71,14 +71,14 @@ class Parent extends PrologEntity {
         .then(results => Promise.all(
           results.map(async r => ({
             name: r['A'],
-            answeredYes: true,
+            answer: 'yes',
             targets: await this.report_targets(r['A'])
           }))
         )),
       this.query('activity_no(A)')
         .then(results => results.map(r => ({
           name: r['A'],
-          answeredYes: false,
+          answer: 'no',
           targets: []
         })))
     ]).then(activities => [].concat.apply([], activities));
