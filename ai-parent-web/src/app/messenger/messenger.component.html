@@ -1,4 +1,4 @@
-<div class="bg-white shadow-lg w-100 h-100 overflow-hidden" [style.border-radius]="'10px'">
+<div class="bg-white shadow-lg w-100 h-100" [style.border-radius]="'10px'">
     <div class="d-flex w-100 h-100">
         <div class="w-25 d-flex flex-column border-right" style="min-width: 400px;">
             <div class="d-flex justify-content-between align-items-center bg-toned-1 flex-shrink-0" [style.height]="'60px'">
@@ -59,8 +59,8 @@
                             </div>
                         </div>
                         <div [id]="message.id" *ngIf="message.type == 'message'" class="d-flex px-4 flex-column my-3" [ngClass]="{'align-items-end': !message.from, 'align-items-start': message.from}">
-                            <div class="px-3 py-2 border-0 position-relative message-bubble pr-5" style="max-width: 75%;" [ngClass]="{'bg-sent': !message.from, 'bg-received': message.from}">
-                                <span class="pr-4" [style.font-size]="'14px'">{{message.content}}</span>
+                            <div class="px-3 py-2 border-0 message-bubble pr-5" [style.max-width]="'75%'" [ngClass]="{'bg-sent': !message.from, 'bg-received': message.from}">
+                                <span class="pr-4 text-break" [style.font-size]="'14px'" [style.white-space]="'pre'">{{message.content}}</span>
                                 <small class="text-muted position-absolute" style="right: 12px; bottom: 0px;">{{message.time | amDateFormat : 'HH:mm'}}</small>
                             </div>
                         </div>

@@ -25,11 +25,17 @@ class Conversation {
             this.context = await this.parent.ask(this.context);
         }
         
+        if (!this.context) {
+            console.log('conversation finished');
+            this.context = 'report';
+        }
+
         this.send(socket);
     }
     
     send(socket) {
         const data = `${this.id}:${this.context}`;
+        console.log('sending ' + data);
         socket.send(data);
     }
 }

@@ -33,6 +33,12 @@ app.post('/api/chat', (req, res) => {
   });
 });
 
+app.get('/api/chat/:id/report', async (req, res) => {
+  const id = req.params.id;
+  const report = await conversations.get(id).parent.report();
+  res.json(report);
+})
+
 const io = socketio(http.createServer(app));
 
 io.on('connection', socket => {

@@ -4,6 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { Contact } from './contact.service';
 import { Observable, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
+import * as translationEnglish from '../assets/locales/en.json';
+import * as translationReport from '../assets/locales/report.json';
+import * as i18n from 'roddeh-i18n';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +18,11 @@ export class MessageService {
   private notificationSubject: Subject<Notification>;
   public readonly notification: Observable<Notification>;
 
+  private translations = {
+    'en': i18n.create({ values: translationEnglish.values }),
+    'report': i18n.create({ values: translationReport.values })
+  };
+
   constructor(
     private http: HttpClient,
     private socket: Socket
@@ -25,14 +33,18 @@ export class MessageService {
     this.conversations = new Map();
 
     this.socket.fromEvent('message')
-      .subscribe((data: string) => {
+      .subscribe(async (data: string) => {
         const [id, content] = data.split(':');
-        const message = this.receiveMessage(id, content);
+        const message = await this.receiveMessage(id, this.translate(content));
         this.notificationSubject.next({
           conversationId: id,
           messageId: message.id
         });
       });
+  }
+
+  private translate(text: string) {
+    return this.translations.en(text);
   }
 
   private generateMessageId() {
@@ -43,7 +55,7 @@ export class MessageService {
     return [...this.conversations.values()];
   }
 
-  private receiveMessage(conversationId: string, content: string) {
+  private async receiveMessage(conversationId: string, content: string) {
     const conversation = this.conversations.get(conversationId);
     if (conversation.messages.length === 0) {
       conversation.messages.push({
@@ -62,10 +74,23 @@ export class MessageService {
       });
     }
 
+    if (content === 'report') {
+      content = await this.getReport(conversationId);
+    }
+
     const message = this.addMessage(conversationId, content, 'message', conversation.contact.userName);
     conversation.lastMessageContentPreview = content;
     conversation.lastMessageTime = message.time;
     return message;
+  }
+
+  private async getReport(conversationId: string): Promise<string> {
+    const data = await this.http.get<Activity[]>(`http://localhost:8000/api/chat/${conversationId}/report`)
+      .toPromise();
+    
+    let report = `Things you did in school today:\n`;
+    data.map(activity => `${activity.name}`)
+    return report;
   }
 
   private addMessage(conversationId: string, content: string, type: MessageType, from: string) {
@@ -127,4 +152,21 @@ export type Conversation = {
   lastMessageContentPreview: string;
   lastMessageTime: number;
   messages: Message[];
+}
+
+export type Feedback = {
+  name: string;
+  answeredYes: boolean;
+}
+
+export type Target = {
+  name: string;
+  answeredYes: boolean;
+  feedbacks: Feedback[];
+}
+
+export type Activity = {
+  name: string;
+  answeredYes: boolean;
+  targets: Target[];
 }

@@ -24,6 +24,7 @@
     "moment": "^2.24.0",
     "ngx-moment": "^3.5.0",
     "ngx-socket-io": "^3.0.1",
+    "roddeh-i18n": "^1.2.0",
     "rxjs": "~6.5.4",
     "tslib": "^1.10.0",
     "uuid": "^7.0.3",
