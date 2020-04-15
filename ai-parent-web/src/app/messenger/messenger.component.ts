@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Conversation, MessageService } from '../message.service';
 import { Moment } from 'moment';
-import { ContactService } from '../contact.service';
+import { ContactService, Contact } from '../contact.service';
 
 @Component({
   selector: 'tcs-messenger',
@@ -18,10 +18,8 @@ export class MessengerComponent implements OnInit {
     private messageService: MessageService,
     private contactService: ContactService
   ) {
-    this.contactService.getContacts().forEach(async contact => {
-      const conversation = await this.messageService.startConversation(contact);
-      this.conversations.push(conversation);
-    });
+
+    this.initConversations(this.contactService.getContacts());
 
     this.messageService.notification.subscribe(notification => {
 
@@ -39,6 +37,11 @@ export class MessengerComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  async initConversations(contacts: Contact[]) {
+    this.conversations = await Promise.all(contacts
+      .map(contact => this.messageService.getConversation(contact)));
+  }
+
   timeFormatter(m: Moment) {
     if (m.isSame(new Date(), 'day')) {
       return m.format('HH:mm');
@@ -47,8 +50,12 @@ export class MessengerComponent implements OnInit {
     }
   }
 
-  send(message: string) {
-    this.messageService.sendMessage(this.selectedConversation.id, message);
+  async send(content: string) {
+    const message = await this.messageService.sendMessage(this.selectedConversation.id, content);
+    setTimeout(() => {
+      const messageElement = document.querySelector('#' + message.id);
+      messageElement.scrollIntoView({ behavior: 'smooth' });
+    });
   }
 
   selectConversation(id: string) {

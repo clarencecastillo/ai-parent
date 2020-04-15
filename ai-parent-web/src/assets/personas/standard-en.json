@@ -3,13 +3,19 @@
         "yes": "yes",
         "no": "no",
         "prompt_name": "Hello there! My name is %{name}. What's yours?",
-        "greet": "Hi %{name}, that's a nice name! I'm going to ask you some questions about how you spent your time in school today. You can just reply me with a 'yes' or a 'no'. If you type something else, I'll just pretend I didn't see that and ask you the same question again. Now, are you ready to start?",
+        "greet": "Hi %{name}, that's a nice name! I'm going to ask you some questions about how you spent your time in school today. You can just reply me with a 'yes' or a 'no'. If you type something else, I'll just pretend I didn't see that and ask you the same question again. \n\nNow, are you ready to start?",
         "connector_1": "I see.",
         "connector_2": "Okay!",
         "connector_3": "Got it.",
         "connector_4": "Hmm..",
         "connector_5": "Alright.",
-        "summary": "Excellent work! I think that's enough questions for now. Here's a summary of what you did in school today:"
+        "error_1": "Sorry, I didn't get that.",
+        "error_2": "I didn't get that.",
+        "error_3": "I don't understand.",
+        "error_4": "I can only understand 'yes' or 'no'.",
+        "error_5": "Please reply only 'yes' or 'no'.",
+        "summary": "Excellent work! I think that's enough questions for now. Here's a summary of what you did in school today:",
+        "nothing": "nothing"
     },
     "conversation": {
         "activity_eat": "Did you eat something in school today?",

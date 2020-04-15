@@ -4,30 +4,33 @@ import { HttpClient } from '@angular/common/http';
 import { Contact } from './contact.service';
 import { Observable, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import * as i18n from 'roddeh-i18n';
-import * as standardEnglishPersona from '../assets/personas/standard-en.json';
-import * as standardChinesePersona from '../assets/personas/standard-zh.json';
+import { TranslatorService, Translator } from './translator.service';
+import { NgForage } from 'ngforage';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MessageService {
 
-  private conversations: Map<string, Conversation>;
-
   private notificationSubject: Subject<Notification>;
   public readonly notification: Observable<Notification>;
 
-  private translations = {
-    'en': {
-      'chat': i18n.create({ values: standardEnglishPersona.conversation }),
-      'report': i18n.create({ values: standardEnglishPersona.report })
+  private prefixedMessages: Message[] = [
+    {
+      id: 'date-alert',
+      prefix: '',
+      content: null,
+      time: new Date().valueOf(),
+      type: 'date'
     },
-    'zh': {
-      'chat': i18n.create({ values: standardChinesePersona.conversation }),
-      'report': i18n.create({ values: standardChinesePersona.report })
+    {
+      id: 'warning-alert',
+      prefix: '',
+      content: null,
+      time: null,
+      type: 'warning'
     }
-  };
+  ];
 
   private SYMBOLS = {
     'yes': '✅',
@@ -36,74 +39,76 @@ export class MessageService {
 
   constructor(
     private http: HttpClient,
-    private socket: Socket
+    private socket: Socket,
+    private translatorService: TranslatorService,
+    private ngf: NgForage
   ) {
 
     this.notificationSubject = new Subject();
     this.notification = this.notificationSubject.asObservable();
-    this.conversations = new Map();
 
     this.socket.fromEvent('message')
       .subscribe(async (data: string) => {
-        const [id, content] = data.split(':');
-        const translator = this.translations[this.conversations.get(id).contact.persona];
-        const message = await this.receiveMessage(id, translator.chat(content));
-        this.notificationSubject.next({
-          conversationId: id,
-          messageId: message.id
-        });
+        let [id, content, replyTo] = data.split(':');
+
+        console.log(`[${id}] received: ${content}`);
+
+        const contact = await this.getStoredConversation(id).then(c => c.contact);
+        const translator = this.translatorService.getTranslator(contact.persona);
+
+        let prefix = '';
+        if (content === 'report') {
+          content = await this.getReport(id, translator);
+        } else {
+
+          if (['yes', 'no'].includes(replyTo)) {
+            prefix = translator.connector() + ' ';
+          }
+
+          content = translator.chat(content);
+        }
+
+        this.receiveMessage(id, content, prefix);
       });
+  }
+
+  private async getStoredConversation(id: string): Promise<Conversation> {
+    return this.ngf.getItem<Conversation>(id);
+  }
+
+  private async storeConversation(conversation: Conversation) {
+    await this.ngf.setItem<Conversation>(conversation.id, conversation);
   }
 
   private generateMessageId() {
     return 'msg' + uuidv4().split('-').join('');
   }
 
-  public getConversations(): Conversation[] {
-    return [...this.conversations.values()];
+  private async receiveMessage(conversationId: string, content: string, prefix: string = '') {
+
+    const message = this.buildMessage(content, 'received', prefix);
+    this.addMessage(conversationId, message);
+
+    this.notificationSubject.next({
+      conversationId: conversationId,
+      messageId: message.id
+    });
   }
 
-  private async receiveMessage(conversationId: string, content: string) {
-    const conversation = this.conversations.get(conversationId);
-    if (conversation.messages.length === 0) {
-      conversation.messages.push({
-        id: this.generateMessageId(),
-        content: null,
-        time: new Date().valueOf(),
-        type: 'date',
-        from: null
-      },
-      {
-        id: this.generateMessageId(),
-        content: null,
-        time: null,
-        type: 'warning',
-        from: null
-      });
-    }
+  private async getReport(conversationId: string, translator: Translator): Promise<string> {
 
-    if (content === 'report') {
-      content = await this.getReport(conversationId);
-    }
-
-    const message = this.addMessage(conversationId, content, 'message', conversation.contact.userName);
-    conversation.lastMessageContentPreview = content;
-    conversation.lastMessageTime = message.time;
-    return message;
-  }
-
-  private async getReport(conversationId: string): Promise<string> {
-    const translator = this.translations[this.conversations.get(conversationId).contact.persona];
     const data = await this.http.get<Activity[]>(`http://localhost:8000/api/chat/${conversationId}/report`)
       .toPromise();
-   
-    let report = [`Here's a summary of what you did in school today:`];
+
+    let report = [translator.general('summary')];
     data.forEach(activity => {
       report.push(`\n${this.SYMBOLS[activity.answer]} ${translator.report(activity.name)}:`);
+
       if (activity.answer === 'no') {
-        report.push(`\t<nothing>`);
+        report.push(`\t<${translator.general('nothing')}>`);
         return;
       }
+
       activity.targets.forEach(target => {
         report.push(`\t${this.SYMBOLS[target.answer]} ${translator.report(target.name)}`);
         target.feedbacks.forEach(feedback => {
@@ -111,45 +116,101 @@ export class MessageService {
         });
       });
     });
+
     return report.join('\n');
   }
 
-  private addMessage(conversationId: string, content: string, type: MessageType, from: string) {
-    const conversation = this.conversations.get(conversationId);
-    const message = {
-      id: this.generateMessageId(),
-      time: new Date().valueOf(),
-      content,
-      type,
-      from
-    };
+  private async addMessage(conversationId: string, message: Message) {
+    const conversation = await this.getStoredConversation(conversationId);
     conversation.messages.push(message);
+    conversation.lastMessageContentPreview = message.content;
+    conversation.lastMessageTime = message.time;
+
+    await this.storeConversation(conversation);
+  }
+
+  private buildMessage(content: string, type: 'received' | 'sent', prefix: string = ''): Message {
+    return {
+      id: this.generateMessageId(),
+      prefix: prefix,
+      content: content,
+      time: new Date().valueOf(),
+      type: type === 'received' ? 'message-received' : 'message-sent'
+    };
+  }
+
+  public async getConversation(contact: Contact): Promise<Conversation> {
+    const conversation = await this.getStoredConversation(contact.id);
+
+    if (conversation) {
+      return conversation;
+    }
+
+    return this.http.post<{ status: string, id: string }>('http://localhost:8000/api/chat', {
+      id: contact.id
+    }).toPromise().then(async res => {
+
+      const translator = this.translatorService.getTranslator(contact.persona);
+      const namePrompt = translator.general('prompt_name', { name: contact.name });
+      const namePromptMessage = this.buildMessage(namePrompt, 'received');
+
+      const conversation = {
+        contact,
+        name: null,
+        id: contact.id,
+        messages: [
+          ...this.prefixedMessages,
+          namePromptMessage
+        ],
+        lastMessageTime: namePromptMessage.time,
+        lastMessageContentPreview: namePromptMessage.content,
+        started: false
+      };
+
+      await this.storeConversation(conversation);
+      return conversation;
+    });
+  }
+
+  public async sendMessage(conversationId: string, content: string): Promise<Message> {
+    const conversation = await this.ngf.getItem<Conversation>(conversationId);
+
+    const translator = this.translatorService.getTranslator(conversation.contact.persona);
+
+    const message = this.buildMessage(content, 'sent');
+    this.addMessage(conversationId, message);
+
+    if (!conversation.name) {
+      conversation.name = content;
+      console.log(`[${conversationId}] name set: ${content}`);
+      const greeting = translator.general('greet', { name: content });
+      this.receiveMessage(conversationId, greeting);
+      return message;
+    }
+
+    if (!conversation.started) {
+
+      if (content !== 'yes') {
+        return message;
+      }
+
+      content = 'start';
+      conversation.started = true;
+      console.log(`[${conversationId}] conversation started`);
+    } else if (!['yes', 'no'].includes(content)) {
+      console.log(`[${conversationId}] invalid reply: ${content}`);
+
+      const lastReceivedMessage = conversation.messages
+        .slice().reverse().find(m => m.type === 'message-received');
+
+      this.receiveMessage(conversationId, lastReceivedMessage.content, translator.error() + ' ');
+      return message;
+    }
+
+    this.socket.emit("message", conversationId + ':' + content);
     return message;
   }
 
-  public async startConversation(contact: Contact): Promise<Conversation> {
-    return this.http.post<{ status: string, id: string }>('http://localhost:8000/api/chat', {
-      id: contact.id
-    }).toPromise().then(res => {
-        const id = res.id;
-
-        this.socket.emit('message', id + ':start');
-        const conversation = {
-          id,
-          contact,
-          messages: [],
-          lastMessageTime: null,
-          lastMessageContentPreview: null
-        };
-        this.conversations.set(id, conversation);
-        return conversation;
-      });
-  }
-
-  public sendMessage(conversationId: string, message: string) {
-    this.socket.emit("message", conversationId + ':' + message);
-    this.addMessage(conversationId, message, 'message', null);
-  }
 }
 
 export type Notification = {
@@ -157,14 +218,14 @@ export type Notification = {
   messageId: string;
 }
 
-export type MessageType = 'message' | 'date' | 'warning';
+export type MessageType = 'message-sent' | 'message-received' | 'date' | 'warning';
 
 export type Message = {
   id: string;
   content: string;
+  prefix: string;
   time: number;
   type: MessageType;
-  from: string;
 }
 
 export type Conversation = {
@@ -173,6 +234,8 @@ export type Conversation = {
   lastMessageContentPreview: string;
   lastMessageTime: number;
   messages: Message[];
+  name: string;
+  started: boolean;
 }
 
 export type Feedback = {

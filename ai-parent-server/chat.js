@@ -10,6 +10,7 @@ class Conversation {
     }
     
     async handle(message, socket) {
+        console.log(`[${this.id}] received: ${message}`);
         if (message === 'start') {
             if (!this.context) {
                 this.context = await this.parent.ask();
@@ -26,16 +27,16 @@ class Conversation {
         }
         
         if (!this.context) {
-            console.log('conversation finished');
+            console.log(`[${this.id}] finished conversation`);
             this.context = 'report';
         }
 
-        this.send(socket);
+        this.send(socket, message);
     }
     
-    send(socket) {
-        const data = `${this.id}:${this.context}`;
-        console.log('sending ' + data);
+    send(socket, replyTo) {
+        console.log(`[${this.id}] sending: ${this.context}`);
+        const data = `${this.id}:${this.context}:${replyTo}`;
         socket.send(data);
     }
 }

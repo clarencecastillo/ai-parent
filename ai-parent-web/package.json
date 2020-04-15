@@ -22,6 +22,7 @@
     "@types/uuid": "^7.0.2",
     "bootstrap": "^4.4.1",
     "moment": "^2.24.0",
+    "ngforage": "^5.0.1",
     "ngx-moment": "^3.5.0",
     "ngx-socket-io": "^3.0.1",
     "roddeh-i18n": "^1.2.0",

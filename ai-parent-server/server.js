@@ -33,8 +33,27 @@ app.post('/api/chat', (req, res) => {
   });
 });
 
+app.delete('/api/chat/:id', (req, res) => {
+
+  const id = req.body.id;
+
+  if (!conversations.has(id)) {
+    throw new Error(`Conversation with id ${id} does not exist`);
+  }
+
+  conversations.delete(id);
+  res.json({
+    status: 'ok'
+  });
+})
+
 app.get('/api/chat/:id/report', async (req, res) => {
   const id = req.params.id;
+
+  if (!conversations.has(id)) {
+    throw new Error(`Conversation with id ${id} does not exist`);
+  }
+
   const report = await conversations.get(id).parent.report();
   res.json(report);
 })

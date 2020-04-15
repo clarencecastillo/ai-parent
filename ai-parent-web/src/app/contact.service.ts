@@ -7,22 +7,38 @@ export class ContactService {
 
   private contacts: Contact[] = [
     {
+      id: 'gangstermama',
+      avatarUrl: '../assets/images/contacts/gangstermom.jpg',
+      displayName: 'Ah Lian Mama 🔥👩🔥',
+      persona: 'en',
+      name: 'Ah Lian Mom'
+    },
+    {
+      id: 'genericmama',
+      avatarUrl: '../assets/images/contacts/genericmom.jpg',
+      displayName: 'Generic Mama 👩',
+      persona: 'en',
+      name: 'Generic Mom'
+    },
+    {
       id: 'leehsienloong',
       avatarUrl: '../assets/images/contacts/leehsienloong.jpeg',
-      userName: 'Lee Hsien Loong 🇸🇬🇸🇬🇸🇬',
-      persona: 'en'
+      displayName: 'Official LHL 🇸🇬🇸🇬🇸🇬',
+      persona: 'en',
+      name: 'Lee Hsien Loong'
     },
     {
       id: 'xijinping',
       avatarUrl: '../assets/images/contacts/xijinping.jpg',
-      userName: 'Xi Jinping🇨🇳',
-      persona: 'zh'
+      displayName: '🇨🇳 Xi Dada 🇨🇳',
+      persona: 'zh',
+      name: 'Xi Jinping'
     }
   ];
 
   constructor() { }
 
-  public getContacts(): Readonly<Contact[]> {
+  public getContacts(): Contact[] {
     return this.contacts;
   }
 }
@@ -30,6 +46,7 @@ export class ContactService {
 export type Contact = {
   id: string;
   avatarUrl: string;
-  userName: string;
+  displayName: string;
   persona: string;
+  name: string;
 };
