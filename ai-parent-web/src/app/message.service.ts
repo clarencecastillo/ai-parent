@@ -4,9 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { Contact } from './contact.service';
 import { Observable, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import * as translationEnglish from '../assets/locales/en.json';
-import * as translationReport from '../assets/locales/report.json';
 import * as i18n from 'roddeh-i18n';
+import * as standardEnglishPersona from '../assets/personas/standard-en.json';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +18,10 @@ export class MessageService {
   public readonly notification: Observable<Notification>;
 
   private translations = {
-    'en': i18n.create({ values: translationEnglish.values }),
-    'report': i18n.create({ values: translationReport.values })
+    'en': {
+      'chat': i18n.create({ values: standardEnglishPersona.conversation }),
+      'report': i18n.create({ values: standardEnglishPersona.report })
+    }
   };
 
   constructor(
@@ -35,16 +36,12 @@ export class MessageService {
     this.socket.fromEvent('message')
       .subscribe(async (data: string) => {
         const [id, content] = data.split(':');
-        const message = await this.receiveMessage(id, this.translate(content));
+        const message = await this.receiveMessage(id, this.translations.en.chat(content));
         this.notificationSubject.next({
           conversationId: id,
           messageId: message.id
         });
       });
-  }
-
-  private translate(text: string) {
-    return this.translations.en(text);
   }
 
   private generateMessageId() {
