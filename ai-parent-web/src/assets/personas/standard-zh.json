@@ -1,4 +1,16 @@
 {
+    "general": {
+        "yes": "yes",
+        "no": "no",
+        "prompt_name": "Hello there! My name is %{name}. What's yours?",
+        "greet": "Hi %{name}, that's a nice name! I'm going to ask you some questions about how you spent your time in school today. You can just reply me with a 'yes' or a 'no'. If you type something else, I'll just pretend I didn't see that and ask you the same question again. Now, are you ready to start?",
+        "connector_1": "I see.",
+        "connector_2": "Okay!",
+        "connector_3": "Got it.",
+        "connector_4": "Hmm..",
+        "connector_5": "Alright.",
+        "summary": "Excellent work! I think that's enough questions for now. Here's a summary of what you did in school today:"
+    },
     "conversation": {
         "activity_eat": "你今天在学校吃了吗?",
         "activity_play": "老师今天让你在学校玩了吗?",
